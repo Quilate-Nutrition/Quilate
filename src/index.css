@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-carob-black: #120905;
+    --color-carob-dark: #1E120B;
+    --color-carob-surface: #2E1B11;
+    --color-carob-card: #3B2219;
+    --color-cocoa-medium: #472C24;
+    --color-gold-primary: #D9A84A;
+    --color-gold-light: #E2B65A;
+    --color-gold-deep: #C8962F;
+    --color-cream-light: #F4EAD8;
+    --color-cream-pure: #FFFDF9;
+    --color-stone-light: #CDBBA4;
+    --color-stone-muted: #A89683;
+    --color-terracotta: #D2723A;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+    background-color: var(--color-carob-black);
+    color: var(--color-cream-light);
+    font-family: 'Barlow', sans-serif;
+  }
+
+  body {
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-primary);
+    outline-offset: 2px;
+  }
+}
+
+.font-condensed {
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+.font-sans {
+  font-family: 'Barlow', sans-serif;
+}
+
+.font-script {
+  font-family: 'Yellowtail', cursive;
+}
+
+/* Touch target helper enforcing 44x44px WCAG requirement */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Custom Luxury Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #120905;
+}
+::-webkit-scrollbar-thumb {
+  background: #472C24;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D9A84A;
+}
+
+/* Smooth text selections */
+::selection {
+  background: #D9A84A;
+  color: #120905;
+}
+
+/* Reduced Motion Support for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
