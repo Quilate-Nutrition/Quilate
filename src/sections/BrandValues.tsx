@@ -51,6 +51,8 @@ export const BrandValues: React.FC<BrandValuesProps> = ({ language }) => {
                       alt={val.title[language]}
                       width="48"
                       height="48"
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-contain filter drop-shadow-[0_2px_6px_rgba(198,170,122,0.35)]"
                     />
                   </div>

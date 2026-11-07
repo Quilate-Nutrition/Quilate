@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Language } from '../types';
 import { NutritionModal } from '../components/NutritionModal';
 import { ShoppingBag, FileText } from 'lucide-react';
+import { getAssetUrl } from '../utils/asset';
 
 export interface ProductShowcaseProps {
   language: Language;
@@ -85,8 +86,12 @@ export const ProductShowcase: React.FC<ProductShowcaseProps> = ({
               {/* High-Fidelity Transparent Cutout Image */}
               <div className="relative aspect-[16/10] my-8 rounded-2xl bg-[#FAF4EB] border border-[#E8DEC9] flex items-center justify-center p-6 overflow-hidden">
                 <img
-                  src="/assets/quilate_energy_gel_transparent.png"
+                  src={getAssetUrl('assets/quilate_energy_gel_transparent.webp')}
                   alt="Gel Energético Quilate"
+                  width="600"
+                  height="375"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-contain filter drop-shadow-[0_15px_35px_rgba(69,45,35,0.35)] group-hover:scale-105 transition-transform duration-500 ease-out"
                 />
               </div>
@@ -195,8 +200,12 @@ export const ProductShowcase: React.FC<ProductShowcaseProps> = ({
               {/* High-Fidelity Transparent Cutout Image */}
               <div className="relative aspect-[16/10] my-8 rounded-2xl bg-[#FAF4EB] border border-[#E8DEC9] flex items-center justify-center p-6 overflow-hidden">
                 <img
-                  src="/assets/quilate_protein_bar_transparent.png"
+                  src={getAssetUrl('assets/quilate_protein_bar_transparent.webp')}
                   alt="Barra Proteica Quilate"
+                  width="600"
+                  height="375"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-contain filter drop-shadow-[0_15px_35px_rgba(69,45,35,0.35)] group-hover:scale-105 transition-transform duration-500 ease-out"
                 />
               </div>

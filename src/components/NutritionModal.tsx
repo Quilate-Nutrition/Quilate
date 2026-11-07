@@ -16,14 +16,13 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
   initialProduct = 'gel',
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<'gel' | 'bar'>(initialProduct);
+  const [prevProductProp, setPrevProductProp] = useState(initialProduct);
   const [caffeineVariant, setCaffeineVariant] = useState<boolean>(false);
 
-  // Sync initial product when opened
-  useEffect(() => {
-    if (isOpen && initialProduct) {
-      setSelectedProduct(initialProduct);
-    }
-  }, [isOpen, initialProduct]);
+  if (prevProductProp !== initialProduct) {
+    setPrevProductProp(initialProduct);
+    setSelectedProduct(initialProduct);
+  }
 
   // Close on Escape key
   useEffect(() => {

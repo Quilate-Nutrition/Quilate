@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://quilate.pt/sitemap.xml
+

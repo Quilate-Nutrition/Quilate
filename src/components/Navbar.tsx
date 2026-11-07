@@ -14,7 +14,6 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   language,
   onLanguageChange,
-  onOpenWaitlist,
   navLinks: customNavLinks,
   onNavigate,
 }) => {
@@ -164,13 +163,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Waitlist Access CTA */}
-          <button
-            onClick={onOpenWaitlist}
-            className="min-h-[38px] px-4 py-1.5 rounded-full bg-[#D9A84A] text-[#120905] hover:bg-[#E2B65A] font-condensed font-bold uppercase tracking-wider text-xs transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9A84A] cursor-pointer"
-          >
-            {language === 'pt' ? 'Acesso Antecipado' : 'VIP Access'}
-          </button>
         </div>
 
         {/* Mobile Hamburger Button with 44x44px touch target */}

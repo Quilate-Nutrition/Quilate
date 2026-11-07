@@ -12,9 +12,11 @@ gsap.registerPlugin(ScrollTrigger);
 // SCRUB_SMOOTHING: GSAP scrub smoothing factor when scrolling UP in reverse
 const SCRUB_SMOOTHING = 0.35;
 
+import { getAssetUrl } from '../utils/asset';
+
 // ASSET PATHS
-const VIDEO_SRC = '/assets/hero.mp4';
-const POSTER_SRC = '/assets/hero_poster.jpg';
+const VIDEO_SRC = getAssetUrl('assets/hero.mp4');
+const POSTER_SRC = getAssetUrl('assets/hero_poster.webp');
 
 interface HeroProps {
   language: Language;
@@ -129,8 +131,11 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
       video.removeEventListener('seeked', handleSeeked);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('canplay', handleCanPlay);
-      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+      const resumeTimeout = resumeTimeoutRef.current;
+      if (resumeTimeout) clearTimeout(resumeTimeout);
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
+      const rafId = rafIdRef.current;
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [applyVideoTime, startAmbientPlayback]);
 
@@ -233,6 +238,8 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
           alt={language === 'pt' ? 'Embalagem de gel e barra proteica Quilate em fundo escuro com alfarroba' : 'Quílate energy gel and protein bar packshot with carob on dark background'}
           width="1280"
           height="720"
+          fetchPriority="high"
+          decoding="sync"
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
             isVideoReady ? 'opacity-0' : 'opacity-100'
           }`}

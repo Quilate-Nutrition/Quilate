@@ -156,6 +156,7 @@ export const QuilateCare: React.FC<QuilateCareProps> = ({ language }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {audienceCards.map((card) => (
               <div
+                key={card.title}
                 className="group p-8 rounded-3xl bg-[#FFFFFF] border border-[#E8DEC9] hover:border-[#6b7a3a]/50 shadow-sm hover:shadow-md transition-all duration-400 flex flex-col justify-between"
               >
                 <div className="space-y-5">

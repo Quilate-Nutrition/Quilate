@@ -2,6 +2,8 @@ import React from 'react';
 import type { Language } from '../types';
 import { ShieldCheck } from 'lucide-react';
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 export interface FooterProps {
   language: Language;
 }
@@ -128,7 +130,7 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-condensed uppercase tracking-wider text-[#FAF4EB]/60">
           <div>
-            © {new Date().getFullYear()} QUÍLATE SPORTS NUTRITION. {language === 'pt' ? 'TODOS OS DIREITOS RESERVADOS.' : 'ALL RIGHTS RESERVED.'}
+            © {CURRENT_YEAR} QUÍLATE SPORTS NUTRITION. {language === 'pt' ? 'TODOS OS DIREITOS RESERVADOS.' : 'ALL RIGHTS RESERVED.'}
           </div>
 
         </div>

@@ -31,12 +31,12 @@ export const App: React.FC = () => {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
       if (path === '/v2' || path.startsWith('/v2/') || hash === '#/v2' || hash === '#v2') {
-        window.history.replaceState(null, '', '/');
+        window.history.replaceState(null, '', import.meta.env.BASE_URL);
       }
     }
 
     // Set canonical page title
-    document.title = 'QUÍLATE — Pure Gold Sports Nutrition | Ouro Natural Português';
+    document.title = 'QUÍLATE | Pure Gold Sports Nutrition';
 
     const handleScroll = () => {
       setShowScrollUp(window.scrollY > 500);

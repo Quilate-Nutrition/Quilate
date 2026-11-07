@@ -49,6 +49,10 @@ export const TeamSection: React.FC<TeamSectionProps> = ({ language }) => {
                   <img
                     src={member.image}
                     alt={member.name}
+                    width="300"
+                    height="360"
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-auto object-contain object-bottom transition-transform duration-500 ease-out group-hover:scale-105"
                   />
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Language } from '../types';
-import { X, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
+import { X, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Button } from './Button';
 
 export interface ModalWaitlistProps {
@@ -22,14 +22,19 @@ export const ModalWaitlist: React.FC<ModalWaitlistProps> = ({
     clubOrLocation: '',
   });
 
+  const handleClose = () => {
+    setSubmitted(false);
+    onClose();
+  };
+
   useEffect(() => {
-    if (!isOpen) {
-      setSubmitted(false);
-      return;
-    }
+    if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        setSubmitted(false);
+        onClose();
+      }
     };
 
     const originalOverflow = document.body.style.overflow;
@@ -65,7 +70,7 @@ export const ModalWaitlist: React.FC<ModalWaitlistProps> = ({
 
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-5 right-5 p-2 rounded-[0.5em] bg-[#24150D] text-[#C4B29E] hover:text-[#F5EBDC] hover:bg-[#321D12] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9A84A]"
           aria-label="Fechar"
         >
@@ -75,10 +80,7 @@ export const ModalWaitlist: React.FC<ModalWaitlistProps> = ({
         {!submitted ? (
           <div className="space-y-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[0.5em] bg-[#24150D] border border-[#D9A84A]/30 text-xs font-condensed font-bold uppercase tracking-wider text-[#D9A84A]">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{language === 'pt' ? 'ACESSO VIP & PROVAS PILOTO' : 'VIP ACCESS & PILOT SAMPLES'}</span>
-              </div>
+  
 
               <h3
                 id="modal-waitlist-title"
@@ -155,9 +157,6 @@ export const ModalWaitlist: React.FC<ModalWaitlistProps> = ({
               </div>
 
               <div className="pt-2">
-                <Button variant="gold" size="md" className="w-full justify-center">
-                  {language === 'pt' ? 'Confirmar Acesso Prioritário' : 'Confirm Priority Access'}
-                </Button>
               </div>
 
               <div className="flex items-center justify-center gap-2 text-[11px] font-condensed tracking-wider text-[#8A7765] uppercase pt-2">
@@ -183,7 +182,7 @@ export const ModalWaitlist: React.FC<ModalWaitlistProps> = ({
             </p>
 
             <div className="pt-4">
-              <Button variant="dark" size="sm" onClick={onClose}>
+              <Button variant="dark" size="sm" onClick={handleClose}>
                 {language === 'pt' ? 'Fechar e Continuar' : 'Close and Return'}
               </Button>
             </div>

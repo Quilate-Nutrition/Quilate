@@ -1,4 +1,5 @@
 import type { TeamMember, ProductSpec, CompetitorRow, BrandValue } from './types';
+import { getAssetUrl } from './utils/asset';
 
 export const teamMembers: TeamMember[] = [
   {
@@ -8,7 +9,7 @@ export const teamMembers: TeamMember[] = [
       pt: 'Chief Executive Officer',
       en: 'Chief Executive Officer',
     },
-    image: '/assets/team_mariana_ceo.png',
+    image: getAssetUrl('assets/team_mariana_ceo.webp'),
     bio: {
       pt: 'Liderança estratégica e visão para levar o ouro natural português a todos os atletas de resistência.',
       en: 'Strategic leadership and brand vision to deliver Portugal\'s natural gold to endurance athletes everywhere.'
@@ -21,7 +22,7 @@ export const teamMembers: TeamMember[] = [
       pt: 'Operations and Supply Chain Manager',
       en: 'Operations and Supply Chain Manager',
     },
-    image: '/assets/team_eduardo_operations.png',
+    image: getAssetUrl('assets/team_eduardo_operations.webp'),
     bio: {
       pt: 'Otimização de processos produtivos e seleção direta dos produtores de alfarroba do Algarve.',
       en: 'Production optimization and direct sourcing with Algarve carob and honey producers.'
@@ -34,7 +35,7 @@ export const teamMembers: TeamMember[] = [
       pt: 'Finance and Business Manager',
       en: 'Finance and Business Manager',
     },
-    image: '/assets/team_joao_finance.png',
+    image: getAssetUrl('assets/team_joao_finance.webp'),
     bio: {
       pt: 'Planeamento financeiro, viabilidade económica e expansão de mercado nacional e internacional.',
       en: 'Financial planning, economic viability, and commercial expansion across domestic and global markets.'
@@ -47,7 +48,7 @@ export const teamMembers: TeamMember[] = [
       pt: 'Product Development Manager',
       en: 'Product Development Manager',
     },
-    image: '/assets/team_francisco_product.png',
+    image: getAssetUrl('assets/team_francisco_product.webp'),
     bio: {
       pt: 'Engenharia alimentar e formulação natural de alta digestibilidade e performance atlética.',
       en: 'Food engineering and natural formulation focused on high bioavailability and athletic performance.'
@@ -60,7 +61,7 @@ export const teamMembers: TeamMember[] = [
       pt: 'Marketing and Brand Manager',
       en: 'Marketing and Brand Manager',
     },
-    image: '/assets/team_carolina_marketing.png',
+    image: getAssetUrl('assets/team_carolina_marketing.webp'),
     bio: {
       pt: 'Posicionamento de marca, ligação à comunidade de trail running e comunicação transparente.',
       en: 'Brand positioning, connection to the trail running community, and transparent communication.'
@@ -94,8 +95,8 @@ export const products: ProductSpec[] = [
       pt: 'Normal ou Com cafeína (50 mg)',
       en: 'Standard or With Caffeine (50mg)',
     },
-    image: '/assets/quilate_energy_gel_transparent.png',
-    cutout: '/assets/quilate_energy_gel_transparent.png',
+    image: getAssetUrl('assets/quilate_energy_gel_transparent.webp'),
+    cutout: getAssetUrl('assets/quilate_energy_gel_transparent.webp'),
   },
   {
     id: 'bar',
@@ -122,8 +123,8 @@ export const products: ProductSpec[] = [
       pt: 'Rica em proteína e fibra',
       en: 'High in Protein and Fibre',
     },
-    image: '/assets/quilate_protein_bar_transparent.png',
-    cutout: '/assets/quilate_protein_bar_transparent.png',
+    image: getAssetUrl('assets/quilate_protein_bar_transparent.webp'),
+    cutout: getAssetUrl('assets/quilate_protein_bar_transparent.webp'),
   },
 ];
 
@@ -138,7 +139,7 @@ export const brandValues: BrandValue[] = [
       pt: 'Valorizar as nossas raízes portuguesas e os produtores por trás de cada ingrediente puro.',
       en: 'Valuing our Portuguese roots and the producers behind every ingredient.',
     },
-    icon: '/assets/icon_authenticity_carob.png',
+    icon: getAssetUrl('assets/icon_authenticity_carob.webp'),
   },
   {
     id: 'excellence',
@@ -150,7 +151,7 @@ export const brandValues: BrandValue[] = [
       pt: 'Exigir os mais elevados padrões de qualidade em todas as etapas do desenvolvimento e produção.',
       en: 'Striving for the highest standards of quality throughout every stage of product development and production.',
     },
-    icon: '/assets/icon_excellence_medal.png',
+    icon: getAssetUrl('assets/icon_excellence_medal.webp'),
   },
   {
     id: 'adaptability',
@@ -162,7 +163,7 @@ export const brandValues: BrandValue[] = [
       pt: 'Ouvir os atletas e a nossa comunidade desportiva, evoluindo com as suas necessidades e com práticas mais sustentáveis.',
       en: 'Listening to athletes and our community, and evolving with their needs and with more sustainable practices.',
     },
-    icon: '/assets/icon_adaptability_chart.png',
+    icon: getAssetUrl('assets/icon_adaptability_chart.webp'),
   },
 ];
 
