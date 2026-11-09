@@ -52,7 +52,15 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
       return;
     }
 
-    // B. Mobile Network Safeguard: Honor Save-Data and slow 2G connections
+    // B. Mobile Viewport Safeguard:
+    // On mobile screens (< 1024px), preserve cellular bandwidth and avoid GPU/CPU video decoding.
+    // The high-resolution WebP poster provides 100% visual fidelity with zero latency.
+    const isMobile = window.matchMedia('(max-width: 1023px)').matches;
+    if (isMobile) {
+      return;
+    }
+
+    // C. Mobile Network Safeguard: Honor Save-Data and slow 2G connections
     const nav = navigator as unknown as {
       connection?: {
         saveData?: boolean;
@@ -397,7 +405,7 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
           width="1280"
           height="720"
           fetchPriority="high"
-          decoding="sync"
+          decoding="async"
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
             isVideoReady && !videoLoadError ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
