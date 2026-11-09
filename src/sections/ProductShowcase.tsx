@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import type { Language } from '../types';
-import { NutritionModal } from '../components/NutritionModal';
 import { ShoppingBag, FileText } from 'lucide-react';
 import { getAssetUrl } from '../utils/asset';
+
+// Code-split heavy nutrition facts modal
+const NutritionModal = lazy(() =>
+  import('../components/NutritionModal').then((m) => ({ default: m.NutritionModal }))
+);
 
 export interface ProductShowcaseProps {
   language: Language;
@@ -282,13 +286,17 @@ export const ProductShowcase: React.FC<ProductShowcaseProps> = ({
 
       </div>
 
-      {/* Pop-up Modal with Verified Nutritional Declaration */}
-      <NutritionModal
-        isOpen={nutritionModalProduct !== null}
-        onClose={() => setNutritionModalProduct(null)}
-        initialProduct={nutritionModalProduct || 'gel'}
-        language={language}
-      />
+      {/* Pop-up Modal with Verified Nutritional Declaration (Deferred Code Splitting) */}
+      <Suspense fallback={null}>
+        {nutritionModalProduct !== null && (
+          <NutritionModal
+            isOpen={true}
+            onClose={() => setNutritionModalProduct(null)}
+            initialProduct={nutritionModalProduct || 'gel'}
+            language={language}
+          />
+        )}
+      </Suspense>
     </section>
   );
 };

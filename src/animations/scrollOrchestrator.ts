@@ -269,46 +269,8 @@ export function initScrollOrchestrator(): () => void {
 
   });
 
-  // --------------------------------------------------------------------------
-  // MOBILE ORCHESTRATION (< 1024px)
-  // --------------------------------------------------------------------------
-  mm.add('(max-width: 1023px)', () => {
-    const sectionIds = [
-      'manifesto',
-      'problem',
-      'products',
-      'story',
-      'heritage',
-      'ingredients',
-      'values',
-      'care',
-      'contact',
-      'closing',
-    ];
-
-    sectionIds.forEach((id) => {
-      const el = document.getElementById(id) || document.getElementById(`v2-${id}`);
-      if (el) {
-        gsap.fromTo(
-          el.querySelectorAll('h2, .v2-stat-box, .stat-box, .v2-problem-card, .problem-card, .v2-care-card, .care-card, .v2-value-card, .value-card'),
-          { y: 25, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            stagger: 0.08,
-            duration: 0.6,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 85%',
-              toggleActions: 'play none none none',
-            },
-          }
-        );
-      }
-    });
-  });
-
+  // Desktop orchestration only (>= 1024px)
+  // On mobile (< 1024px), keep DOM static to achieve 0 CLS, instant FCP/LCP, and 0ms main thread blocking
   return () => {
     mm.revert();
     ScrollTrigger.getAll().forEach((t) => t.kill());

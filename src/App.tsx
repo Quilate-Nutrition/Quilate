@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import type { Language } from './types';
 import './styles/theme.css';
 
@@ -15,8 +15,11 @@ import { TeamSection } from './sections/TeamSection';
 import { QuilateCare } from './sections/QuilateCare';
 import { ClosingFinale } from './sections/ClosingFinale';
 import { Footer } from './sections/Footer';
-import { ModalWaitlist } from './components/ModalWaitlist';
-import { initScrollOrchestrator } from './animations/scrollOrchestrator';
+
+// Code-split modals loaded only on user interaction
+const ModalWaitlist = lazy(() =>
+  import('./components/ModalWaitlist').then((m) => ({ default: m.ModalWaitlist }))
+);
 
 import { ArrowUp } from 'lucide-react';
 
@@ -44,12 +47,38 @@ export const App: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Initialize premium GSAP animations orchestrator
-    const cleanupOrchestrator = initScrollOrchestrator();
+    // Initialize desktop-only GSAP orchestrator asynchronously when browser is idle to keep mobile bundle ultra-lean
+    let cleanupOrchestrator: (() => void) | null = null;
+    let idleHandle: number | ReturnType<typeof setTimeout> | null = null;
+
+    if (typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches) {
+      const startOrchestrator = () => {
+        import('./animations/scrollOrchestrator').then((m) => {
+          cleanupOrchestrator = m.initScrollOrchestrator();
+        });
+      };
+
+      if ('requestIdleCallback' in window) {
+        idleHandle = (window as unknown as {
+          requestIdleCallback: (cb: () => void, opts: { timeout: number }) => number;
+        }).requestIdleCallback(startOrchestrator, { timeout: 1500 });
+      } else {
+        idleHandle = setTimeout(startOrchestrator, 400);
+      }
+    }
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      cleanupOrchestrator();
+      if (idleHandle !== null) {
+        if ('cancelIdleCallback' in window && typeof idleHandle === 'number') {
+          (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleHandle);
+        } else {
+          clearTimeout(idleHandle);
+        }
+      }
+      if (cleanupOrchestrator) {
+        cleanupOrchestrator();
+      }
     };
   }, []);
 
@@ -189,12 +218,16 @@ export const App: React.FC = () => {
         )}
       </div>
 
-      {/* Waitlist Modal */}
-      <ModalWaitlist
-        isOpen={isWaitlistOpen}
-        onClose={() => setIsWaitlistOpen(false)}
-        language={language}
-      />
+      {/* Waitlist Modal (Deferred Code Splitting) */}
+      <Suspense fallback={null}>
+        {isWaitlistOpen && (
+          <ModalWaitlist
+            isOpen={isWaitlistOpen}
+            onClose={() => setIsWaitlistOpen(false)}
+            language={language}
+          />
+        )}
+      </Suspense>
 
     </div>
   );

@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Language } from '../types';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
 
 // ============================================================================
 // CONFIGURATION & TUNING CONSTANTS
@@ -72,24 +68,44 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
       }
     }
 
-    // C. Deferral until window 'load' + requestIdleCallback
+    // C. Deferral until window 'load' + genuine idle capacity or user interaction
     let isCancelled = false;
     let idleHandle: number | ReturnType<typeof setTimeout> | null = null;
+    let settledTimer: ReturnType<typeof setTimeout> | null = null;
 
     const scheduleDeferredVideo = () => {
       const attachVideoSource = () => {
         if (!isCancelled) {
           setVideoSrc(VIDEO_SRC);
+          cleanupTriggers();
         }
       };
 
-      if ('requestIdleCallback' in window) {
-        idleHandle = (window as unknown as {
-          requestIdleCallback: (cb: () => void, opts: { timeout: number }) => number;
-        }).requestIdleCallback(attachVideoSource, { timeout: 2500 });
-      } else {
-        idleHandle = setTimeout(attachVideoSource, 400);
-      }
+      const onUserInteraction = () => {
+        attachVideoSource();
+      };
+
+      const cleanupTriggers = () => {
+        window.removeEventListener('scroll', onUserInteraction);
+        window.removeEventListener('touchstart', onUserInteraction);
+        window.removeEventListener('click', onUserInteraction);
+        if (settledTimer) clearTimeout(settledTimer);
+      };
+
+      window.addEventListener('scroll', onUserInteraction, { once: true, passive: true });
+      window.addEventListener('touchstart', onUserInteraction, { once: true, passive: true });
+      window.addEventListener('click', onUserInteraction, { once: true, passive: true });
+
+      // Wait 3.5s after window.load for initial layout, FCP, LCP, and hydration to conclude before requesting 3.9MB video
+      settledTimer = setTimeout(() => {
+        if ('requestIdleCallback' in window) {
+          idleHandle = (window as unknown as {
+            requestIdleCallback: (cb: () => void, opts: { timeout: number }) => number;
+          }).requestIdleCallback(attachVideoSource, { timeout: 4000 });
+        } else {
+          attachVideoSource();
+        }
+      }, 3500);
     };
 
     if (document.readyState === 'complete') {
@@ -103,6 +119,7 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
       return () => {
         isCancelled = true;
         window.removeEventListener('load', handleWindowLoad);
+        if (settledTimer) clearTimeout(settledTimer);
         if (idleHandle !== null) {
           if ('cancelIdleCallback' in window && typeof idleHandle === 'number') {
             (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleHandle);
@@ -115,6 +132,7 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
 
     return () => {
       isCancelled = true;
+      if (settledTimer) clearTimeout(settledTimer);
       if (idleHandle !== null) {
         if ('cancelIdleCallback' in window && typeof idleHandle === 'number') {
           (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleHandle);
@@ -196,7 +214,6 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
       setIsVideoReady(true);
       setVideoLoadError(false);
       startAmbientPlayback();
-      ScrollTrigger.refresh();
     };
 
     const handleCanPlay = () => {
@@ -281,12 +298,12 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
   }, []);
 
   // --------------------------------------------------------------------------
-  // 4. GSAP ScrollTrigger: Natural Scroll Down & Reverse Video on Scroll UP
+  // 4. GSAP ScrollTrigger: Desktop Natural Scroll Down & Reverse Video on Scroll UP
   // --------------------------------------------------------------------------
   useEffect(() => {
     const heroEl = heroRef.current;
     const video = videoRef.current;
-    if (!heroEl) return;
+    if (!heroEl || !isVideoReady) return;
 
     // Check for reduced motion preference
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -294,54 +311,72 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
       return;
     }
 
-    const ctx = gsap.context(() => {
-      // Natural page scrolling on scroll down, video rewinds only on scroll UP
-      ScrollTrigger.create({
-        trigger: heroEl,
-        start: 'top top',
-        end: 'bottom top',
-        scrub: SCRUB_SMOOTHING,
-        onUpdate: (self) => {
-          const isScrollingUp = self.direction === -1;
-          const p = self.progress;
+    // On mobile screens (< 1024px), preserve ambient GPU playback without scroll scrub overhead to guarantee 0 CLS and 60fps
+    const isMobile = window.matchMedia('(max-width: 1023px)').matches;
+    if (isMobile) {
+      return;
+    }
 
-          if (isScrollingUp) {
-            // SCROLL UP: Animate / scrub backwards frame-by-frame
-            if (resumeTimeoutRef.current) {
-              clearTimeout(resumeTimeoutRef.current);
-              resumeTimeoutRef.current = null;
-            }
-            if (isAmbientPlayingRef.current) {
-              pauseAmbientPlayback();
-            }
+    let ctx: { revert: () => void } | null = null;
+    let isCancelled = false;
 
-            const duration = video?.duration || 10;
-            targetTimeRef.current = Math.max(0, p * duration);
-            applyVideoTime();
-          } else {
-            // SCROLL DOWN: No animation override!
-            // Video plays forward naturally at 1x speed, page scrolls freely
-            if (!isAmbientPlayingRef.current && (!video || video.paused)) {
-              startAmbientPlayback();
-            }
-          }
+    // Load GSAP asynchronously only on desktop when video is active
+    Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(
+      ([{ default: gsap }, { ScrollTrigger }]) => {
+        if (isCancelled) return;
+        gsap.registerPlugin(ScrollTrigger);
 
-          // When reaching the top, resume ambient loop
-          if (p <= 0.02 && !isAmbientPlayingRef.current) {
-            startAmbientPlayback();
-          }
-        },
-      });
-    }, heroRef);
+        ctx = gsap.context(() => {
+          ScrollTrigger.create({
+            trigger: heroEl,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: SCRUB_SMOOTHING,
+            onUpdate: (self) => {
+              const isScrollingUp = self.direction === -1;
+              const p = self.progress;
+
+              if (isScrollingUp) {
+                // SCROLL UP: Animate / scrub backwards frame-by-frame
+                if (resumeTimeoutRef.current) {
+                  clearTimeout(resumeTimeoutRef.current);
+                  resumeTimeoutRef.current = null;
+                }
+                if (isAmbientPlayingRef.current) {
+                  pauseAmbientPlayback();
+                }
+
+                const duration = video?.duration || 10;
+                targetTimeRef.current = Math.max(0, p * duration);
+                applyVideoTime();
+              } else {
+                // SCROLL DOWN: No animation override!
+                if (!isAmbientPlayingRef.current && (!video || video.paused)) {
+                  startAmbientPlayback();
+                }
+              }
+
+              // When reaching the top, resume ambient loop
+              if (p <= 0.02 && !isAmbientPlayingRef.current) {
+                startAmbientPlayback();
+              }
+            },
+          });
+        }, heroRef);
+      }
+    );
 
     const handleResize = () => {
-      ScrollTrigger.refresh();
+      import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
+        ScrollTrigger.refresh();
+      });
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
+      isCancelled = true;
       window.removeEventListener('resize', handleResize);
-      ctx.revert();
+      if (ctx) ctx.revert();
     };
   }, [applyVideoTime, isVideoReady, pauseAmbientPlayback, startAmbientPlayback]);
 

@@ -1,9 +1,4 @@
-import React, { useRef, useEffect } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useReducedMotion } from '../hooks/useMotion';
-
-gsap.registerPlugin(ScrollTrigger);
+import React from 'react';
 
 export interface KineticTickerProps {
   items?: string[];
@@ -28,52 +23,6 @@ export const KineticTicker: React.FC<KineticTickerProps> = ({
   className = '',
   theme = 'dark',
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const reducedMotion = useReducedMotion();
-
-  // Dynamically accelerate CSS animation playback rate on high scroll velocity
-  useEffect(() => {
-    if (reducedMotion || !containerRef.current || !trackRef.current) return;
-
-    const track = trackRef.current;
-    let animFrame: number;
-    let targetRate = 1;
-    let currentRate = 1;
-
-    // Smoothly interpolate playback rate
-    const updatePlayback = () => {
-      currentRate += (targetRate - currentRate) * 0.1;
-      if (Math.abs(currentRate - targetRate) > 0.01) {
-        // Apply to any Web Animations API player on this element
-        const animations = track.getAnimations();
-        if (animations && animations.length > 0) {
-          animations.forEach((anim) => {
-            anim.playbackRate = currentRate;
-          });
-        }
-      }
-      animFrame = requestAnimationFrame(updatePlayback);
-    };
-
-    animFrame = requestAnimationFrame(updatePlayback);
-
-    const st = ScrollTrigger.create({
-      trigger: containerRef.current,
-      start: 'top bottom',
-      end: 'bottom top',
-      onUpdate: (self) => {
-        const velocity = Math.abs(self.getVelocity());
-        targetRate = gsap.utils.clamp(1, 2.8, 1 + velocity / 1000);
-      },
-    });
-
-    return () => {
-      cancelAnimationFrame(animFrame);
-      st.kill();
-    };
-  }, [reducedMotion]);
-
   // Color themes
   const themeClasses = {
     dark: 'bg-[#24150D] text-[#FAF4EB] border-[#361B12]',
@@ -86,12 +35,10 @@ export const KineticTicker: React.FC<KineticTickerProps> = ({
 
   return (
     <div
-      ref={containerRef}
       className={`relative w-full overflow-hidden border-y py-3.5 select-none z-10 ${themeClasses} ${className}`}
       aria-hidden="true"
     >
       <div
-        ref={trackRef}
         className={`flex w-max will-change-transform ${
           reverse ? 'ticker-track-right' : 'ticker-track-left'
         }`}

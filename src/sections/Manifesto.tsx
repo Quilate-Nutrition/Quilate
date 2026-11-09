@@ -1,48 +1,14 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import type { Language } from '../types';
 import { TrendingUp, Users, Flame } from 'lucide-react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useGsapContext } from '../hooks/useMotion';
-
-gsap.registerPlugin(ScrollTrigger);
 
 export interface ManifestoProps {
   language: Language;
 }
 
 export const Manifesto: React.FC<ManifestoProps> = ({ language }) => {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
-
-  useGsapContext(
-    () => {
-      const stats = statsRef.current?.querySelectorAll('.v2-stat-box');
-      if (stats?.length) {
-        gsap.fromTo(
-          stats,
-          { y: 30, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            stagger: 0.15,
-            duration: 0.8,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: statsRef.current,
-              start: 'top 80%',
-            },
-          }
-        );
-      }
-    },
-    sectionRef,
-    [language]
-  );
-
   return (
     <section
-      ref={sectionRef}
       id="manifesto"
       className="v2-snap-section relative py-28 sm:py-36 bg-[#FAF4EB] text-[#361B12] overflow-hidden border-t border-[#E8DEC9] text-left"
     >
@@ -100,7 +66,7 @@ export const Manifesto: React.FC<ManifestoProps> = ({ language }) => {
           </div>
 
           {/* Right Column: Verified Statistical Proof Cards */}
-          <div ref={statsRef} className="lg:col-span-5 space-y-4">
+          <div className="lg:col-span-5 space-y-4">
             
             {/* Stat 1: Trail Finishes */}
             <div className="v2-stat-box p-6 rounded-2xl bg-[#FFFFFF] border border-[#E8DEC9] hover:border-[#C6AA7A] shadow-sm transition-colors">
