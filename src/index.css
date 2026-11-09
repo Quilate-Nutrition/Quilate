@@ -83,6 +83,13 @@
   color: #120905;
 }
 
+/* Mobile GPU Performance: Cap extreme blur radiuses on mobile to prevent GPU rasterization chokepoints while preserving ambient glow */
+@media (max-width: 768px) {
+  [class*="blur-\[1"] {
+    filter: blur(48px) !important;
+  }
+}
+
 /* Reduced Motion Support for Accessibility */
 @media (prefers-reduced-motion: reduce) {
   html {

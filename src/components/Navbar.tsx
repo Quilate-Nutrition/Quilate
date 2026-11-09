@@ -34,25 +34,33 @@ export const Navbar: React.FC<NavbarProps> = ({
   const links = customNavLinks || defaultNavLinks;
 
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 40);
 
-      const scrollPosition = window.scrollY + 200;
+          const scrollPosition = window.scrollY + 200;
 
-      for (const link of links) {
-        const el =
-          document.getElementById(link.id) ||
-          (link.id === 'story' ? document.getElementById('heritage') : null) ||
-          (link.id === 'contact' ? document.getElementById('closing') : null) ||
-          document.getElementById(`v2-${link.id}`);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(link.id);
-            break;
+          for (const link of links) {
+            const el =
+              document.getElementById(link.id) ||
+              (link.id === 'story' ? document.getElementById('heritage') : null) ||
+              (link.id === 'contact' ? document.getElementById('closing') : null) ||
+              document.getElementById(`v2-${link.id}`);
+            if (el) {
+              const top = el.offsetTop;
+              const height = el.offsetHeight;
+              if (scrollPosition >= top && scrollPosition < top + height) {
+                setActiveSection(link.id);
+                break;
+              }
+            }
           }
-        }
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 

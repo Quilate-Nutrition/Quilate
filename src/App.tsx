@@ -6,15 +6,18 @@ import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { KineticTicker } from './components/KineticTicker';
 import { Manifesto } from './sections/Manifesto';
-import { TheProblem } from './sections/TheProblem';
-import { ProductShowcase } from './sections/ProductShowcase';
-import { HeritageStory } from './sections/HeritageStory';
-import { IngredientPurity } from './sections/IngredientPurity';
-import { BrandValues } from './sections/BrandValues';
-import { TeamSection } from './sections/TeamSection';
-import { QuilateCare } from './sections/QuilateCare';
-import { ClosingFinale } from './sections/ClosingFinale';
-import { Footer } from './sections/Footer';
+import { DeferredSection } from './components/DeferredSection';
+
+// Code-split below-the-fold sections to drastically reduce initial JS parse time and Main Thread work
+const TheProblem = lazy(() => import('./sections/TheProblem').then((m) => ({ default: m.TheProblem })));
+const ProductShowcase = lazy(() => import('./sections/ProductShowcase').then((m) => ({ default: m.ProductShowcase })));
+const HeritageStory = lazy(() => import('./sections/HeritageStory').then((m) => ({ default: m.HeritageStory })));
+const IngredientPurity = lazy(() => import('./sections/IngredientPurity').then((m) => ({ default: m.IngredientPurity })));
+const BrandValues = lazy(() => import('./sections/BrandValues').then((m) => ({ default: m.BrandValues })));
+const TeamSection = lazy(() => import('./sections/TeamSection').then((m) => ({ default: m.TeamSection })));
+const QuilateCare = lazy(() => import('./sections/QuilateCare').then((m) => ({ default: m.QuilateCare })));
+const ClosingFinale = lazy(() => import('./sections/ClosingFinale').then((m) => ({ default: m.ClosingFinale })));
+const Footer = lazy(() => import('./sections/Footer').then((m) => ({ default: m.Footer })));
 
 // Code-split modals loaded only on user interaction
 const ModalWaitlist = lazy(() =>
@@ -83,21 +86,30 @@ export const App: React.FC = () => {
   }, []);
 
   const scrollTo = (id: string) => {
-    const el =
-      document.getElementById(id) ||
-      (id === 'story' ? document.getElementById('heritage') : null) ||
-      (id === 'contact' ? document.getElementById('closing') : null) ||
-      document.getElementById(`v2-${id}`);
-
-    if (el) {
-      const navbarOffset = 80;
-      const elementPosition = el.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - navbarOffset;
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
-      });
+    // Reveal all deferred sections immediately if jumping via anchor
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('quilate:reveal-all'));
     }
+
+    const performScroll = () => {
+      const el =
+        document.getElementById(id) ||
+        (id === 'story' ? document.getElementById('heritage') : null) ||
+        (id === 'contact' ? document.getElementById('closing') : null) ||
+        document.getElementById(`v2-${id}`);
+
+      if (el) {
+        const navbarOffset = 80;
+        const elementPosition = el.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - navbarOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        });
+      }
+    };
+
+    requestAnimationFrame(performScroll);
   };
 
   return (
@@ -156,7 +168,11 @@ export const App: React.FC = () => {
         <Manifesto language={language} />
 
         {/* Section 3: The Chemical Paradox */}
-        <TheProblem language={language} />
+        <DeferredSection id="problem" minHeight="500px" fallbackClass="bg-[#F4EDE2]">
+          <Suspense fallback={<div id="problem" className="min-h-[50vh] bg-[#F4EDE2]" />}>
+            <TheProblem language={language} />
+          </Suspense>
+        </DeferredSection>
 
         {/* Kinetic Ticker 2 (Gold Inverted) */}
         <KineticTicker
@@ -173,33 +189,65 @@ export const App: React.FC = () => {
         />
 
         {/* Section 4: Dual Product Range (Gel & Bar) */}
-        <ProductShowcase
-          language={language}
-          onOpenWaitlist={() => setIsWaitlistOpen(true)}
-        />
+        <DeferredSection id="products" minHeight="600px" fallbackClass="bg-[#FAF4EB]">
+          <Suspense fallback={<div id="products" className="min-h-[60vh] bg-[#FAF4EB]" />}>
+            <ProductShowcase
+              language={language}
+              onOpenWaitlist={() => setIsWaitlistOpen(true)}
+            />
+          </Suspense>
+        </DeferredSection>
 
         {/* Section 5: Origin & Etymology */}
-        <HeritageStory language={language} />
+        <DeferredSection id="story" minHeight="500px" fallbackClass="bg-[#FAF4EB]">
+          <Suspense fallback={<div id="story" className="min-h-[50vh] bg-[#FAF4EB]" />}>
+            <HeritageStory language={language} />
+          </Suspense>
+        </DeferredSection>
 
         {/* Section 6: Transparent Recipe & Pure Botanical Ingredients */}
-        <IngredientPurity language={language} />
+        <DeferredSection id="ingredients" minHeight="500px" fallbackClass="bg-[#FAF4EB]">
+          <Suspense fallback={<div id="ingredients" className="min-h-[50vh] bg-[#FAF4EB]" />}>
+            <IngredientPurity language={language} />
+          </Suspense>
+        </DeferredSection>
 
         {/* Section 7: Brand Values */}
-        <BrandValues language={language} />
+        <DeferredSection id="values" minHeight="400px" fallbackClass="bg-[#FAF4EB]">
+          <Suspense fallback={<div id="values" className="min-h-[40vh] bg-[#FAF4EB]" />}>
+            <BrandValues language={language} />
+          </Suspense>
+        </DeferredSection>
 
         {/* Section 8: Engineering Leadership Team & Objectives */}
-        <TeamSection language={language} />
+        <DeferredSection id="team" minHeight="500px" fallbackClass="bg-[#F4EDE2]">
+          <Suspense fallback={<div id="team" className="min-h-[50vh] bg-[#F4EDE2]" />}>
+            <TeamSection language={language} />
+          </Suspense>
+        </DeferredSection>
 
         {/* Section 9: Quilate Care (Coming Soon Initiative) */}
-        <QuilateCare language={language} />
+        <DeferredSection id="care" minHeight="500px" fallbackClass="bg-[#FAF4EB]">
+          <Suspense fallback={<div id="care" className="min-h-[50vh] bg-[#FAF4EB]" />}>
+            <QuilateCare language={language} />
+          </Suspense>
+        </DeferredSection>
 
         {/* Section 10: Climax & Club / Partner Portal */}
-        <ClosingFinale language={language} />
+        <DeferredSection id="contact" minHeight="500px" fallbackClass="bg-[#FAF4EB]">
+          <Suspense fallback={<div id="contact" className="min-h-[50vh] bg-[#FAF4EB]" />}>
+            <ClosingFinale language={language} />
+          </Suspense>
+        </DeferredSection>
 
       </main>
 
       {/* Brand Footer */}
-      <Footer language={language} />
+      <DeferredSection id="footer" minHeight="250px" fallbackClass="bg-[#24150D]">
+        <Suspense fallback={<footer id="footer" className="min-h-[25vh] bg-[#24150D]" />}>
+          <Footer language={language} />
+        </Suspense>
+      </DeferredSection>
 
       {/* Floating Action Controls */}
       <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2">
