@@ -26,7 +26,9 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurStory }) => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
+  const [videoLoadError, setVideoLoadError] = useState(false);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,11 +42,95 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
   const rafIdRef = useRef<number | null>(null);
 
   // --------------------------------------------------------------------------
-  // 1. Ambient Autoplay vs Interactive Scroll Control
+  // 1. Deferred Video Loading Strategy:
+  //    - Does not request hero.mp4 during critical page load
+  //    - Waits for window 'load' event AND main-thread idle callback
+  //    - Respects prefers-reduced-motion and Save-Data / 2G mobile connections
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // A. Accessibility: Respect prefers-reduced-motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      return;
+    }
+
+    // B. Mobile Network Safeguard: Honor Save-Data and slow 2G connections
+    const nav = navigator as unknown as {
+      connection?: {
+        saveData?: boolean;
+        effectiveType?: string;
+      };
+    };
+    if (nav.connection) {
+      if (nav.connection.saveData === true) {
+        return; // User has data saver enabled; keep static poster
+      }
+      if (nav.connection.effectiveType === 'slow-2g' || nav.connection.effectiveType === '2g') {
+        return; // Slow cellular connection; preserve user bandwidth
+      }
+    }
+
+    // C. Deferral until window 'load' + requestIdleCallback
+    let isCancelled = false;
+    let idleHandle: number | ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleDeferredVideo = () => {
+      const attachVideoSource = () => {
+        if (!isCancelled) {
+          setVideoSrc(VIDEO_SRC);
+        }
+      };
+
+      if ('requestIdleCallback' in window) {
+        idleHandle = (window as unknown as {
+          requestIdleCallback: (cb: () => void, opts: { timeout: number }) => number;
+        }).requestIdleCallback(attachVideoSource, { timeout: 2500 });
+      } else {
+        idleHandle = setTimeout(attachVideoSource, 400);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      scheduleDeferredVideo();
+    } else {
+      const handleWindowLoad = () => {
+        scheduleDeferredVideo();
+      };
+      window.addEventListener('load', handleWindowLoad, { once: true });
+
+      return () => {
+        isCancelled = true;
+        window.removeEventListener('load', handleWindowLoad);
+        if (idleHandle !== null) {
+          if ('cancelIdleCallback' in window && typeof idleHandle === 'number') {
+            (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleHandle);
+          } else {
+            clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
+          }
+        }
+      };
+    }
+
+    return () => {
+      isCancelled = true;
+      if (idleHandle !== null) {
+        if ('cancelIdleCallback' in window && typeof idleHandle === 'number') {
+          (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleHandle);
+        } else {
+          clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
+        }
+      }
+    };
+  }, []);
+
+  // --------------------------------------------------------------------------
+  // 2. Ambient Autoplay vs Interactive Scroll Control
   // --------------------------------------------------------------------------
   const startAmbientPlayback = useCallback(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !video.src || video.readyState < 1) return;
     isAmbientPlayingRef.current = true;
     video.loop = true;
     video.muted = true;
@@ -66,11 +152,11 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
   }, []);
 
   // --------------------------------------------------------------------------
-  // 2. Core Scrub Controller: Backpressure-Controlled Video Seeking
+  // 3. Core Scrub Controller: Backpressure-Controlled Video Seeking
   // --------------------------------------------------------------------------
   const applyVideoTime = useCallback(() => {
     const video = videoRef.current;
-    if (!video || video.readyState < 1 || !video.duration || isNaN(video.duration)) {
+    if (!video || !video.src || video.readyState < 1 || !video.duration || isNaN(video.duration)) {
       return;
     }
 
@@ -84,17 +170,15 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
   }, []);
 
   // --------------------------------------------------------------------------
-  // 3. Video Lifecycle & Event Handlers
+  // 4. Video Lifecycle & Event Handlers (Active only after videoSrc is assigned)
   // --------------------------------------------------------------------------
   useEffect(() => {
+    if (!videoSrc) return;
     const video = videoRef.current;
     if (!video) return;
 
     video.muted = true;
     video.playsInline = true;
-
-    // Start playing immediately when page loads
-    startAmbientPlayback();
 
     const handleSeeked = () => {
       isSeekingRef.current = false;
@@ -110,34 +194,73 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
 
     const handleLoadedMetadata = () => {
       setIsVideoReady(true);
+      setVideoLoadError(false);
       startAmbientPlayback();
       ScrollTrigger.refresh();
     };
 
     const handleCanPlay = () => {
       setIsVideoReady(true);
+      setVideoLoadError(false);
       startAmbientPlayback();
+    };
+
+    const handleError = () => {
+      setVideoLoadError(true);
+      setIsVideoReady(false);
     };
 
     video.addEventListener('seeked', handleSeeked);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('error', handleError);
 
     if (video.readyState >= 1) {
       handleLoadedMetadata();
+    } else {
+      video.load();
     }
 
     return () => {
       video.removeEventListener('seeked', handleSeeked);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('error', handleError);
       const resumeTimeout = resumeTimeoutRef.current;
       if (resumeTimeout) clearTimeout(resumeTimeout);
       // oxlint-disable-next-line react-hooks/exhaustive-deps
       const rafId = rafIdRef.current;
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [applyVideoTime, startAmbientPlayback]);
+  }, [videoSrc, applyVideoTime, startAmbientPlayback]);
+
+  // --------------------------------------------------------------------------
+  // 5. Viewport Visibility Management (Pause off-screen to preserve battery & CPU)
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    const heroEl = heroRef.current;
+    const video = videoRef.current;
+    if (!heroEl || !video || !isVideoReady || videoLoadError) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry.isIntersecting) {
+          if (!video.paused) {
+            pauseAmbientPlayback();
+          }
+        } else {
+          if (video.paused && isAmbientPlayingRef.current) {
+            startAmbientPlayback();
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(heroEl);
+    return () => observer.disconnect();
+  }, [isVideoReady, videoLoadError, pauseAmbientPlayback, startAmbientPlayback]);
 
   // --------------------------------------------------------------------------
   // 3. Mouse Parallax for Subtle Depth on Floating Elements
@@ -241,26 +364,25 @@ export const Hero: React.FC<HeroProps> = ({ language, onExploreProducts, onOurSt
           fetchPriority="high"
           decoding="sync"
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-            isVideoReady ? 'opacity-0' : 'opacity-100'
+            isVideoReady && !videoLoadError ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
           style={{
             objectPosition: 'center center',
           }}
         />
 
-        {/* Scroll-Scrubbed & Ambient Autoplay HTML5 Video Element */}
+        {/* Scroll-Scrubbed & Ambient Autoplay HTML5 Video Element (Completely deferred) */}
         <video
           ref={videoRef}
-          src={VIDEO_SRC}
+          src={videoSrc || undefined}
           poster={POSTER_SRC}
-          autoPlay
           muted
           loop
           playsInline
-          preload="auto"
+          preload={videoSrc ? 'auto' : 'none'}
           aria-label={language === 'pt' ? 'Vídeo cinemático do produto Quilate' : 'Quilate cinematic product video'}
           className={`w-full h-full object-cover transition-opacity duration-700 ${
-            isVideoReady ? 'opacity-100' : 'opacity-0'
+            isVideoReady && !videoLoadError ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           style={{
             objectPosition: 'center center',
